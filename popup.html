@@ -1,21 +1,15 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Replace iframe Content</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        padding: 10px;
-      }
-      button {
-        padding: 10px 20px;
-        font-size: 16px;
-      }
-    </style>
+    <title>Language Selection</title>
+    <script src="popup.js"></script>
   </head>
   <body>
-    <h1>Replace iframe Content</h1>
-    <button id="replaceButton">Replace iframe Content</button>
-    <script src="popup.js"></script>
+    <h5>Select Language</h5>
+    <select id="languageSelect" style="margin-bottom: 10px">
+      <option value="en">English</option>
+      <option value="vi">Vietnamese</option>
+    </select>
+    <button id="saveButton">Save</button>
   </body>
 </html>

@@ -1,16 +1,26 @@
 {
   "manifest_version": 3,
-  "name": "Iframe Div Click Listener",
+  "name": "PDF Modifier",
   "version": "1.0",
-  "permissions": ["activeTab", "downloads"],
+  "permissions": ["activeTab", "downloads", "storage"],
   "background": {
     "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "persistent": false
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
       "js": ["content.js"],
       "all_frames": true
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["libs/pdf-lib.min.js"],
+      "matches": ["<all_urls>"]
     }
   ]
 }

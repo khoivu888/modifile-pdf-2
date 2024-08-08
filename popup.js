@@ -1,30 +1,22 @@
-document.getElementById("replaceButton").addEventListener("click", async () => {
-  let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+document.addEventListener("DOMContentLoaded", function () {
+  const languageSelect = document.getElementById("languageSelect");
+  const saveButton = document.getElementById("saveButton");
 
-  chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    function: replaceIframeContent,
+  // Load the saved language selection
+  chrome.storage.sync.get("selectedLanguage", function (data) {
+    if (data.selectedLanguage) {
+      languageSelect.value = data.selectedLanguage;
+    }
+  });
+
+  // Save the selected language when the button is clicked
+  saveButton.addEventListener("click", function () {
+    const selectedLanguage = languageSelect.value;
+    chrome.storage.sync.set(
+      { selectedLanguage: selectedLanguage },
+      function () {
+        console.log("Language saved:", selectedLanguage);
+      }
+    );
   });
 });
-
-async function replaceIframeContent() {
-  const iframe = document.querySelector("iframe");
-  if (iframe) {
-    const src = iframe.src;
-    try {
-      const response = await fetch(src);
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-      const html = await response.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, "text/html");
-      const bodyContent = doc.body.innerHTML;
-      iframe.srcdoc = bodyContent;
-    } catch (error) {
-      console.error("Error fetching and replacing iframe content:", error);
-    }
-  } else {
-    console.error("No iframe found on the page");
-  }
-}
