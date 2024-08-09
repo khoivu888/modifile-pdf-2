@@ -1,8 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "PDF Modifier",
+  "name": "Your Extension",
   "version": "1.0",
-  "permissions": ["activeTab", "downloads", "storage"],
   "background": {
     "service_worker": "background.js"
   },
@@ -10,16 +9,28 @@
     "default_popup": "popup.html",
     "persistent": false
   },
+  "permissions": [
+    "downloads",
+    "storage",
+    "activeTab",
+    "scripting",
+    "tabs",
+    "https://payments.google.com/*",
+    "https://ads.google.com/*"
+  ],
+  "host_permissions": [
+    "https://payments.google.com/*",
+    "https://ads.google.com/*"
+  ],
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"],
-      "all_frames": true
+      "matches": ["https://payments.google.com/*"],
+      "js": ["contentScript.js"]
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["libs/pdf-lib.min.js"],
+      "resources": ["fonts/Arial.ttf", "fonts/ArialMdm.ttf"],
       "matches": ["<all_urls>"]
     }
   ]
