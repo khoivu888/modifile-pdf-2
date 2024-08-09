@@ -4,6 +4,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (message.action === "divClicked" && message.divInfo.dataUrl) {
     let pdfUrl = `https://payments.google.com${message.divInfo.dataUrl}`;
     console.log(message.divInfo, "div info");
+
     try {
       let response = await fetch(pdfUrl);
       let arrayBuffer = await response.arrayBuffer();
@@ -24,7 +25,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
       const arialFont = await pdfDoc.embedFont(arialFontBytes);
       const arialBoldFont = await pdfDoc.embedFont(arialBoldFontBytes);
 
-      chrome.storage.local.get("selectedLanguage", async (result) => {
+      chrome.storage.sync.get("selectedLanguage", async (result) => {
         let language = result.selectedLanguage || "en"; // Default to English if no language is selected
 
         // Data to add to the PDF
@@ -102,37 +103,26 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         reader.onloadend = function () {
           const url = reader.result;
 
-          // Retry logic to get filename
-          const getFilename = (attempts = 5) => {
-            return new Promise((resolve, reject) => {
-              chrome.storage.local.get("filename", ({ filename }) => {
-                if (filename) {
-                  filename = sanitizeFilename(filename); // Sanitize the filename
-                  console.log("Filename to be used:", filename); // Log the filename
-                  resolve(filename);
-                } else if (attempts > 1) {
-                  setTimeout(() => {
-                    resolve(getFilename(attempts - 1)); // Retry after a short delay
-                  }, 500);
-                } else {
-                  reject(
-                    new Error("Failed to get filename after multiple attempts.")
-                  );
-                }
-              });
-            });
-          };
+          // Use the filename from the message or default to 'default-pdf.pdf'
+          const filename = message.divInfo.filename || "default-pdf.pdf";
+          console.log(filename, "filename");
 
-          getFilename()
-            .then((filename) => {
-              chrome.downloads.download({
-                url: url,
-                filename: filename,
-              });
-            })
-            .catch((error) => {
-              console.error("Error downloading PDF:", error);
-            });
+          chrome.downloads.download(
+            {
+              url: url,
+              filename: filename,
+            },
+            (downloadId) => {
+              if (chrome.runtime.lastError) {
+                console.error(
+                  "Error downloading PDF:",
+                  chrome.runtime.lastError.message
+                );
+              } else {
+                console.log("PDF download initiated with ID:", downloadId);
+              }
+            }
+          );
         };
 
         reader.readAsDataURL(modifiedBlob);
@@ -143,25 +133,47 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   }
 });
 
-// Sanitize the filename by removing invalid characters
-function sanitizeFilename(filename) {
-  return filename.replace(/[\/\\?%*:|"<>]/g, "_");
-}
-
 // Prevent the original file from downloading by canceling the download event
 chrome.downloads.onCreated.addListener((item) => {
+  console.log(item, "data item");
   if (item.url.includes("payments.google.com")) {
     chrome.downloads.cancel(item.id, () => {
       chrome.downloads.erase({ id: item.id }, () => {
-        // Store the original filename
+        // Store the original filename and initiate the message
         chrome.storage.local.set({ filename: item.filename }, () => {
           console.log("Original filename stored:", item.filename); // Log the original filename
 
-          chrome.runtime.sendMessage({
-            action: "divClicked",
-            divInfo: {
-              dataUrl: item.url.replace("https://payments.google.com", ""),
-            },
+          // Check if there's an active tab and send the message
+          chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs.length > 0) {
+              chrome.scripting.executeScript(
+                {
+                  target: { tabId: tabs[0].id },
+                  func: (url) => {
+                    chrome.runtime.sendMessage({
+                      action: "divClicked",
+                      divInfo: {
+                        dataUrl: url.replace("https://payments.google.com", ""),
+                        filename: "default-file.pdf", // Pass a custom filename if needed
+                      },
+                    });
+                  },
+                  args: [item.url],
+                },
+                () => {
+                  if (chrome.runtime.lastError) {
+                    console.error(
+                      "Error sending divClicked message:",
+                      chrome.runtime.lastError.message
+                    );
+                  } else {
+                    console.log("divClicked message sent successfully");
+                  }
+                }
+              );
+            } else {
+              console.error("No active tab found to send the message to.");
+            }
           });
         });
       });
