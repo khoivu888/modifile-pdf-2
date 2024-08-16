@@ -47,6 +47,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             { text: "Bac Ninh", size: 8.3, font: arialFont },
             { text: "Bac Ninh Province 22000", size: 8.3, font: arialFont },
             { text: "Vietnam", size: 8.3, font: arialFont },
+            { text: "Tax ID: 2301141907", size: 8.3, font: arialFont },
           ];
         } else if (language === "vi") {
           dataToAdd = [
@@ -61,6 +62,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             { text: "Bắc Ninh", size: 8.3, font: arialFont },
             { text: "Bac Ninh Province 22000", size: 8.3, font: arialFont },
             { text: "Vietnam", size: 8.3, font: arialFont },
+            { text: "Mã số thuế: 2301141907", size: 8.3, font: arialFont },
           ];
         }
 
@@ -68,16 +70,16 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         const pages = pdfDoc.getPages();
         const firstPage = pages[0];
 
-        let currentY = 689;
+        let currentY = 698;
         dataToAdd.forEach((item) => {
           // Draw white background
           const textWidth = item.font.widthOfTextAtSize(item.text, item.size);
           const textHeight = item.font.heightAtSize(item.size);
           firstPage.drawRectangle({
             x: 48,
-            y: currentY - textHeight - 12, // Adjust y to match text
+            y: currentY - textHeight - 11, // Adjust y to match text
             width: 300,
-            height: textHeight + 17,
+            height: textHeight + 12,
             color: PDFLib.rgb(1, 1, 1), // White color
           });
 
@@ -104,7 +106,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
           const url = reader.result;
 
           // Use the filename from the message or default to 'default-pdf.pdf'
-          const filename = message.divInfo.filename || "default-pdf.pdf";
+          const filename = message.divInfo.filename || "invoice-export.pdf";
           console.log(filename, "filename");
 
           chrome.downloads.download(
@@ -154,7 +156,7 @@ chrome.downloads.onCreated.addListener((item) => {
                       action: "divClicked",
                       divInfo: {
                         dataUrl: url.replace("https://payments.google.com", ""),
-                        filename: "default-file.pdf", // Pass a custom filename if needed
+                        filename: "invoice-export.pdf", // Pass a custom filename if needed
                       },
                     });
                   },
