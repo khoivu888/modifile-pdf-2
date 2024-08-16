@@ -48,6 +48,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             { text: "Bac Ninh Province 22000", size: 8.3, font: arialFont },
             { text: "Vietnam", size: 8.3, font: arialFont },
             { text: "Tax ID: 2301141907", size: 8.3, font: arialFont },
+            { text: "", size: 8.3, font: arialFont },
           ];
         } else if (language === "vi") {
           dataToAdd = [
@@ -63,6 +64,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             { text: "Bac Ninh Province 22000", size: 8.3, font: arialFont },
             { text: "Vietnam", size: 8.3, font: arialFont },
             { text: "Mã số thuế: 2301141907", size: 8.3, font: arialFont },
+            { text: "", size: 8.3, font: arialFont },
           ];
         }
 
@@ -77,9 +79,9 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
           const textHeight = item.font.heightAtSize(item.size);
           firstPage.drawRectangle({
             x: 48,
-            y: currentY - textHeight - 11, // Adjust y to match text
+            y: currentY - textHeight, // Adjust y to match text
             width: 300,
-            height: textHeight + 12,
+            height: textHeight + 8,
             color: PDFLib.rgb(1, 1, 1), // White color
           });
 
@@ -136,16 +138,13 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 });
 
 // Prevent the original file from downloading by canceling the download event
-chrome.downloads.onCreated.addListener((item) => {
-  console.log(item, "data item");
+chrome.downloads.onDeterminingFilename.addListener((item, suggest) => {
   if (item.url.includes("payments.google.com")) {
     chrome.downloads.cancel(item.id, () => {
       chrome.downloads.erase({ id: item.id }, () => {
-        // Store the original filename and initiate the message
         chrome.storage.local.set({ filename: item.filename }, () => {
-          console.log("Original filename stored:", item.filename); // Log the original filename
+          console.log("Original filename stored:", item.filename);
 
-          // Check if there's an active tab and send the message
           chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             if (tabs.length > 0) {
               chrome.scripting.executeScript(
@@ -180,5 +179,8 @@ chrome.downloads.onCreated.addListener((item) => {
         });
       });
     });
+
+    // Suggest cancelling the download
+    suggest({ cancel: true });
   }
 });
