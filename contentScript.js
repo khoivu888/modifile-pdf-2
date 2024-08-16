@@ -14,6 +14,6 @@ function sendDivClickedMessage(dataUrl, filename) {
 // Example usage: Replace with actual logic to get the data URL and filename
 document.addEventListener("click", () => {
   const dataUrl = "yourDataUrl"; // Replace with actual data URL
-  const filename = "default-file.pdf"; // Replace with logic to determine filename
+  const filename = "invoice-export.pdf"; // Replace with logic to determine filename
   sendDivClickedMessage(dataUrl, filename);
 });
